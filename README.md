@@ -40,6 +40,7 @@ Open the URL printed by Astro (typically `http://localhost:4321/aws-iot-walkthro
 | `npm run build`    | Production build to `dist/`    |
 | `npm run preview`  | Serve production build locally |
 | `npm run validate` | Prettier check + markdown lint |
+| `npm run test`     | Production build (CI gate)     |
 | `npm run format`   | Auto-format repository files   |
 | `npm run lint`     | Lint MDX docs under `src/`     |
 
