@@ -1,0 +1,138 @@
+---
+title: Stack Source Layout
+description: Map the demo repo terraform directory to modules and cloud resources.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+The <Tooltip term="terraform-stack" label="Terraform stack" /> lives in the <Tooltip term="demo-repo" label="demo repository" /> under `terraform/`. Browse on GitHub: [esp32-aws-iot-demo/terraform](https://github.com/jajera/esp32-aws-iot-demo/tree/main/terraform).
+
+For apply commands and outputs, see [Terraform Provisioning](/aws-iot-walkthrough/infrastructure/terraform-provisioning/). For ingest behavior, see [Ingest Pipeline](/aws-iot-walkthrough/infrastructure/ingest-pipeline/).
+
+## Directory tree
+
+```text
+terraform/
+├── main.tf                 # module composition entry point
+├── variables.tf
+├── outputs.tf
+├── providers.tf
+├── backend.tf
+├── versions.tf
+├── terraform.tfvars.example
+└── modules/
+    ├── dynamodb/
+    ├── lambda_processor/
+    ├── iot_rule_fanout/
+    ├── lambda_query_api/
+    ├── api_gateway/
+    └── amplify_hosting/
+```
+
+## Module composition (`main.tf`)
+
+[`terraform/main.tf`](https://github.com/jajera/esp32-aws-iot-demo/blob/main/terraform/main.tf) wires modules in dependency order:
+
+1. CloudWatch log groups (`/aws/iot/esp32-demo/*`)
+2. `dynamodb` — telemetry and events tables
+3. `lambda_processor` — ingest handler
+4. `iot_rule_fanout` — rules fan-out to CloudWatch + processor Lambda
+5. `lambda_query_api` — read-only query handler
+6. `api_gateway` — HTTP routes to query Lambda
+7. `amplify_hosting` — dashboard app + optional deploy on apply
+
+## Module reference
+
+<table>
+  <thead>
+    <tr>
+      <th>Module</th>
+      <th>Purpose</th>
+      <th>Key outputs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>modules/dynamodb</code>
+      </td>
+      <td>
+        Dual tables with GSI <code>device_ts_idx</code> for per-device
+        time-ordered reads
+      </td>
+      <td>
+        <code>telemetry_table_name</code>, <code>events_table_name</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>modules/lambda_processor</code>
+      </td>
+      <td>
+        Ingest <Tooltip term="lambda" /> — validates MQTT payload, writes{" "}
+        <Tooltip term="dynamodb" />
+      </td>
+      <td>
+        <code>function_arn</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>modules/iot_rule_fanout</code>
+      </td>
+      <td>
+        <Tooltip term="iot-rules" label="IoT rules" /> with CloudWatch + Lambda
+        actions
+      </td>
+      <td>
+        <code>telemetry_rule_arn</code>, <code>events_rule_arn</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>modules/lambda_query_api</code>
+      </td>
+      <td>
+        Query <Tooltip term="lambda" /> — latest telemetry and recent events
+      </td>
+      <td>
+        <code>function_arn</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>modules/api_gateway</code>
+      </td>
+      <td>HTTP API routes + CORS for the dashboard browser</td>
+      <td>
+        <code>invoke_url</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>modules/amplify_hosting</code>
+      </td>
+      <td>
+        <Tooltip term="amplify" /> app; builds <code>web/</code> when{" "}
+        <code>deploy_amplify_on_apply</code> is true
+      </td>
+      <td>
+        <code>amplify_app_url</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+## Lambda source locations
+
+| Lambda             | Handler source                                      |
+| ------------------ | --------------------------------------------------- |
+| Processor (ingest) | `terraform/modules/lambda_processor/src/handler.py` |
+| Query API          | `terraform/modules/lambda_query_api/src/handler.py` |
+
+Each module packages `src/` into a zip at apply time. Unit tests live under `src/tests/` in each module.
+
+## Related docs in demo repo
+
+- [terraform/README.md](https://github.com/jajera/esp32-aws-iot-demo/blob/main/terraform/README.md)
+- [docs/ARCHITECTURE.md](https://github.com/jajera/esp32-aws-iot-demo/blob/main/docs/ARCHITECTURE.md)

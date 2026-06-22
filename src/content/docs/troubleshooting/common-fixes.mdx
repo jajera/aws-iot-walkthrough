@@ -1,0 +1,129 @@
+---
+title: Common Fixes
+description: Quick fixes for USB, upload, serial, cloud checks, and firmware runtime issues.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+## USB and permissions
+
+### `Permission denied` on `/dev/ttyACM0`
+
+- Run setup script:
+
+```bash
+sudo ./scripts/setup-linux-usb.sh
+```
+
+- Log out/in (or reboot), then reconnect board
+- Confirm dialout group membership:
+
+```bash
+groups | grep dialout
+```
+
+### Board powers on but no serial device
+
+- Use a data-capable USB cable
+- Try direct port, avoid unstable hubs
+- Re-check enumeration:
+
+```bash
+lsusb
+ls /dev/ttyACM*
+```
+
+## Upload failures
+
+### `Failed to connect` / `No serial data received`
+
+- Enter download mode with BOOT + RST/EN sequence
+- Ensure monitor is closed during upload
+- Verify env is `esp32-s3-n16r8` for S3 hardware
+
+### `Invalid head of packet (0x1B)`
+
+- Close any active serial monitor/tool using the same port
+- Re-enter bootloader mode and retry upload
+
+## Serial runtime checks
+
+### Blank monitor after upload
+
+- Press RST/EN once while monitor is open
+- Or use upload-and-monitor one-liner:
+
+```bash
+pio run -d firmware -e esp32-s3-n16r8 -t upload && pio device monitor -d firmware -b 115200
+```
+
+### Wi-Fi or <Tooltip term="mqtt" label="MQTT" /> never connects
+
+- Re-check `WIFI_SSID` and `WIFI_PASSWORD`
+- Regenerate headers:
+
+```bash
+./scripts/generate-headers.sh
+```
+
+- Re-provision device certs if needed — see [Device Provisioning](/aws-iot-walkthrough/provisioning/device-provisioning/):
+
+```bash
+./aws/provision.sh
+./scripts/generate-headers.sh
+```
+
+## Cloud verification
+
+### Serial publishes but <Tooltip term="cloudwatch" label="CloudWatch" /> is empty
+
+- Confirm correct region variable:
+
+```bash
+echo "$AWS_REGION"
+```
+
+- Tail error log group:
+
+```bash
+aws logs tail /aws/iot/esp32-demo/errors --since 1h
+```
+
+- Confirm both <Tooltip term="iot-rules" label="IoT rules" /> are enabled:
+
+```bash
+aws iot get-topic-rule --rule-name esp32_demo_telemetry_rule --query 'rule.ruleDisabled'
+aws iot get-topic-rule --rule-name esp32_demo_events_rule --query 'rule.ruleDisabled'
+```
+
+- If rules or log groups are missing, re-run [CloudFormation Bootstrap](/aws-iot-walkthrough/provisioning/cloudformation-bootstrap/)
+
+### Telemetry publish but no blue LED
+
+- Validate onboard RGB routing (`GPIO48` default, some boards require `PIN_NEOPIXEL=38`)
+- Check RGB solder bridge on board variants
+
+## <Tooltip term="firmware" /> issues
+
+### Wi-Fi reconnect loops in serial logs
+
+- Confirm AP is 2.4 GHz and credentials are correct
+- Re-run header generation after env changes:
+
+```bash
+./scripts/generate-headers.sh
+```
+
+- Reflash firmware and monitor from clean boot
+
+### MQTT disconnect after NTP failure
+
+- Confirm outbound NTP and TLS paths are not blocked on the network
+- Reboot device and check for successful time sync before MQTT connect
+- If repeated, capture serial logs and verify `ts` fallback behavior is expected
+
+### Watchdog reset triggers under unstable connectivity
+
+- Verify power stability and USB cable quality first
+- Reduce concurrent host serial tooling to a single monitor
+- Check repeated reconnect storms in logs, then reboot and retest in stable network conditions

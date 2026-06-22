@@ -1,0 +1,83 @@
+---
+title: Payload Contract
+description: Telemetry and event payload fields, topic structure, and example messages.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+## MQTT topic structure
+
+- Telemetry: `devices/{Thing_Name}/telemetry`
+- Events: `devices/{Thing_Name}/events`
+
+Each <Tooltip term="thing" /> publishes to its own topic namespace under the <Tooltip term="payload-contract" label="payload contract" />.
+
+Serialization is implemented in [`firmware/src/payload_codec.h`](https://github.com/jajera/esp32-aws-iot-demo/blob/main/firmware/src/payload_codec.h). The canonical field contract is in the demo repo [PAYLOAD.md](https://github.com/jajera/esp32-aws-iot-demo/blob/main/docs/PAYLOAD.md).
+
+## Telemetry message fields
+
+- `device_id` (string)
+- `ts` (integer, epoch seconds)
+- `type` (string, fixed value `connectivity`)
+- `rssi` (integer, dBm)
+- `uptime_s` (integer, seconds)
+- `heap_free` (integer, bytes)
+- `chip_temp_c` (number, Celsius)
+- `chip_model` (string, e.g. `ESP32-S3`)
+- `cpu_mhz` (integer, CPU clock in MHz)
+- `flash_bytes` (integer, flash size in bytes)
+- `wifi_ssid` (string, associated network name)
+- `wifi_status` (integer, Wi-Fi association state; `3` = connected)
+- `wifi_channel` (integer, AP channel)
+- `wifi_ip` (string, device IPv4 address)
+- `wifi_gateway` (string, default gateway IPv4)
+- `wifi_dns` (string, DNS server IPv4)
+- `clock_offset_ms` (integer, NTP clock offset in milliseconds)
+
+Max serialized telemetry size: 512 bytes.
+
+Telemetry example:
+
+```json
+{
+  "device_id": "esp32-c",
+  "ts": 1782117400,
+  "type": "connectivity",
+  "rssi": -54,
+  "uptime_s": 73987,
+  "heap_free": 244916,
+  "chip_temp_c": 29.5,
+  "chip_model": "ESP32-S3",
+  "cpu_mhz": 240,
+  "flash_bytes": 16777216,
+  "wifi_ssid": "your-wifi-ssid",
+  "wifi_status": 3,
+  "wifi_channel": 10,
+  "wifi_ip": "192.168.12.2",
+  "wifi_gateway": "192.168.12.1",
+  "wifi_dns": "192.168.99.1",
+  "clock_offset_ms": -62
+}
+```
+
+## Event message fields
+
+- `device_id` (string)
+- `ts` (integer, epoch seconds)
+- `type` (string, fixed value `button`)
+- `event` (string, fixed value `press`)
+
+Max serialized event size: 128 bytes.
+
+Event example:
+
+```json
+{
+  "device_id": "esp32-c",
+  "ts": 1710001251,
+  "type": "button",
+  "event": "press"
+}
+```
+
+Field quick reference: [Payload Quick Reference](/aws-iot-walkthrough/reference/payload-quick-reference/).

@@ -1,0 +1,43 @@
+---
+title: AWS IoT Walkthrough
+description: ESP32 AWS IoT demo walkthrough — Phase 1 device-to-cloud proof through API and dashboard hosting.
+template: splash
+hero:
+  tagline: I'd wanted to connect hardware to the cloud for a long time — and finally got the chance. In high school I assembled audio amplifiers as a hobby and for class; ESP32 firmware and AWS were new ground for me. This walkthrough is the path I took from pretest to API and dashboard hosting.
+  actions:
+    - text: Get Started
+      link: /introduction/project-overview/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/jajera/esp32-aws-iot-demo
+      icon: external
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+import Tooltip from "@/components/Tooltip.astro";
+
+## What you'll build
+
+<CardGrid>
+  <Card title="Device-to-cloud telemetry" icon="rocket">
+    <Tooltip term="esp32" label="ESP32-S3" /> publishing sensor readings to{" "}
+    <Tooltip term="iot-core" label="AWS IoT Core" /> via <Tooltip term="mqtt" />{" "}
+    — verified end-to-end in{" "}
+    <Tooltip term="cloudwatch" label="CloudWatch Logs" />.
+  </Card>
+  <Card title="Pretest then full stack" icon="setting">
+    Fast <Tooltip term="pretest" /> proves flash and serial before{" "}
+    <Tooltip term="terraform" /> provisions rules, <Tooltip term="lambda" />,{" "}
+    <Tooltip term="dynamodb" />, query API, and <Tooltip term="amplify" />{" "}
+    hosting.
+  </Card>
+  <Card title="Copy-paste first" icon="document">
+    Every command is ready to run. Wi-Fi and thing variables come from provision
+    scripts and `terraform output` so you never guess resource IDs.
+  </Card>
+  <Card title="Fixes when things break" icon="warning">
+    Common USB, upload, runtime, and cloud verification issues with direct fixes
+    — plus source mapping and supporting links.
+  </Card>
+</CardGrid>

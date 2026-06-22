@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="ESP32 Dashboard">
+  <rect width="32" height="32" rx="8" fill="#1d4ed8"/>
+  <rect x="5" y="5" width="22" height="22" rx="6" fill="#fff"/>
+  <rect x="10" y="10" width="12" height="12" rx="3" fill="#3b82f6"/>
+</svg>

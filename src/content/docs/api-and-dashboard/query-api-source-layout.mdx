@@ -1,0 +1,106 @@
+---
+title: Query API Source Layout
+description: HTTP routes, Lambda handler structure, and response shapes for the read API.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+The query API is a read-only <Tooltip term="lambda" /> behind <Tooltip term="api-gateway" label="API Gateway" />. It reads from <Tooltip term="dynamodb" /> via the `device_ts_idx` GSI — the browser never calls DynamoDB directly.
+
+For `curl` validation steps, see [Query API Validation](/aws-iot-walkthrough/api-and-dashboard/query-api-validation/). For Terraform wiring, see [Stack Source Layout](/aws-iot-walkthrough/infrastructure/stack-source-layout/).
+
+## Handler entry point
+
+[`terraform/modules/lambda_query_api/src/handler.py`](https://github.com/jajera/esp32-aws-iot-demo/blob/main/terraform/modules/lambda_query_api/src/handler.py)
+
+`lambda_handler(event, context)`:
+
+1. Read `deviceId` from path parameters
+2. Parse route from `routeKey` or `rawPath`
+3. Query DynamoDB and return JSON with appropriate HTTP status
+
+Environment variables: `TELEMETRY_TABLE_NAME`, `EVENTS_TABLE_NAME`, `DEFAULT_EVENTS_LIMIT`, `MAX_EVENTS_LIMIT`.
+
+## Routes
+
+<table>
+  <thead>
+    <tr>
+      <th>Method / path</th>
+      <th>Handler branch</th>
+      <th>Success</th>
+      <th>Not found</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>GET /devices/&#123;deviceId&#125;/telemetry/latest</code>
+      </td>
+      <td>
+        <code>telemetry_latest</code>
+      </td>
+      <td>HTTP 200 + latest telemetry payload</td>
+      <td>HTTP 404</td>
+    </tr>
+    <tr>
+      <td>
+        <code>GET /devices/&#123;deviceId&#125;/events?limit=N</code>
+      </td>
+      <td>
+        <code>events_recent</code>
+      </td>
+      <td>HTTP 200 + events array</td>
+      <td>HTTP 404</td>
+    </tr>
+  </tbody>
+</table>
+
+`limit` defaults to 10, capped at 50.
+
+## Response shapes (success)
+
+**Telemetry latest** — HTTP 200:
+
+```json
+{
+  "device_id": "esp32-c",
+  "telemetry": {
+    "device_id": "esp32-c",
+    "ts": 1782117400,
+    "type": "connectivity"
+  },
+  "record": {
+    "device_id": "esp32-c",
+    "effective_ts": 1782117400,
+    "payload": {}
+  }
+}
+```
+
+The `telemetry` object is the device MQTT payload from the <Tooltip term="payload-contract" label="payload contract" />.
+
+**Recent events** — HTTP 200:
+
+```json
+{
+  "device_id": "esp32-c",
+  "events": [
+    {
+      "device_id": "esp32-c",
+      "ts": 1782117400,
+      "type": "button",
+      "event": "press"
+    }
+  ],
+  "records": [],
+  "count": 1,
+  "limit": 10
+}
+```
+
+**Unknown device** — HTTP 404 with `{"error": "No telemetry for device_id=..."}` or events equivalent.
+
+## API base URL
+
+Set from Terraform output `query_api_invoke_url` (no trailing slash required). The dashboard uses the same base as `VITE_API_URL`.

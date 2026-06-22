@@ -1,0 +1,137 @@
+---
+title: Project Overview
+description: Understand what this walkthrough builds and how data flows from device to dashboard.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+## What you will build
+
+This walkthrough takes an <Tooltip term="esp32" label="ESP32-S3" /> from local <Tooltip term="firmware" /> setup to a hosted dashboard backed by <Tooltip term="aws" /> data services.
+
+Deliverables across all phases:
+
+- Device telemetry published over <Tooltip term="mqtt" /> to <Tooltip term="iot-core" label="AWS IoT Core" />
+- Serverless ingest pipeline using <Tooltip term="iot-rules" label="IoT Rules" />, <Tooltip term="lambda" />, and <Tooltip term="dynamodb" />
+- Query API for latest telemetry and recent button events
+- Hosted dashboard that reads through <Tooltip term="api-gateway" label="API Gateway" /> and <Tooltip term="lambda" />
+
+## Architecture and data flow
+
+![Architecture diagram: ESP32-S3 publishes over MQTT to AWS IoT Core, through IoT Rules and Lambda into DynamoDB, then API Gateway and Amplify-hosted dashboard](/aws-iot-walkthrough/architecture-diagram.svg)
+
+The browser consumes data through <Tooltip term="api-gateway" label="API Gateway" /> only. It does not access <Tooltip term="dynamodb" /> directly.
+
+## Key terms
+
+<table>
+  <thead>
+    <tr>
+      <th>Term</th>
+      <th>Definition</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <Tooltip term="demo-repo" label="Demo Repo" />
+      </td>
+      <td>
+        Source repository{" "}
+        <a href="https://github.com/jajera/esp32-aws-iot-demo">
+          esp32-aws-iot-demo
+        </a>{" "}
+        — all commands run from its root unless stated otherwise
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <Tooltip term="firmware" />
+      </td>
+      <td>
+        PlatformIO ESP32 application in <code>firmware/</code> that connects to
+        Wi-Fi and publishes MQTT messages
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <Tooltip term="iot-policy" label="IoT Policy" />
+      </td>
+      <td>Least-privilege MQTT permissions for a device certificate</td>
+    </tr>
+    <tr>
+      <td>
+        <Tooltip term="payload-contract" label="Payload Contract" />
+      </td>
+      <td>JSON schema for telemetry and event MQTT messages</td>
+    </tr>
+    <tr>
+      <td>
+        <Tooltip term="pretest" />
+      </td>
+      <td>
+        Phase 1 device-to-cloud proof — complete before{" "}
+        <Tooltip term="terraform" /> rollout. Covers Prerequisites through Cloud
+        Verification in the sidebar (not a separate Pretest section).
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <Tooltip term="terraform-stack" label="Terraform Stack" />
+      </td>
+      <td>
+        <Tooltip term="terraform" /> modules in <code>terraform/</code>{" "}
+        provisioning ingest, API, and hosting
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <Tooltip term="thing" />
+      </td>
+      <td>
+        <Tooltip term="iot-core" label="IoT Core" /> device identity (example:{" "}
+        <code>esp32-c</code>)
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+## Walkthrough phases
+
+The sidebar follows three phases. Phase 1 is the <Tooltip term="pretest" /> — prove the device publishes to <Tooltip term="cloudwatch" label="CloudWatch" /> before provisioning the full stack.
+
+### Phase 1: Zero to First Message (pretest)
+
+Goal: provision the device, flash firmware, and confirm telemetry and button events in CloudWatch.
+
+Sidebar sections in order:
+
+0. **Introduction** — architecture, phases, and key terms
+1. **Prerequisites** — host tools, AWS access, environment variables
+2. **Security** — certificate trust model and IoT policy concepts
+3. **AWS Provisioning** — CloudFormation bootstrap and device provisioning
+4. **Firmware** — source layout, modules, payload contract, build config
+5. **Device Setup** — USB permissions, build, flash, serial monitor
+6. **Cloud Verification** — tail logs and confirm Phase 1 pass criteria
+
+Pass criteria are defined in [End-to-End Validation](/aws-iot-walkthrough/cloud-verification/end-to-end-validation/).
+
+### Phase 2: Serverless Ingest
+
+Goal: provision shared infrastructure with <Tooltip term="terraform" /> and verify records persist to <Tooltip term="dynamodb" />.
+
+Sidebar sections:
+
+1. **Infrastructure** — stack source layout, ingest pipeline, Terraform apply and DynamoDB validation
+
+### Phase 3: API and Dashboard
+
+Goal: validate query API endpoints and run or deploy the dashboard through <Tooltip term="amplify" />.
+
+Sidebar sections:
+
+1. **API and Dashboard** — query API and dashboard source layouts, endpoint validation, local run and Amplify hosting
+
+**Troubleshooting**, **Future Improvements**, and **Reference** apply across all phases.
+
+See [Future Improvements](/aws-iot-walkthrough/future-improvements/future-improvements/) for possible next steps.

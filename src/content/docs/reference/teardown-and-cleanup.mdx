@@ -1,0 +1,46 @@
+---
+title: Teardown and Cleanup
+description: Remove hosted resources, destroy infrastructure, and deprovision device credentials.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+## Reverse-provisioning teardown order
+
+1. Cleanup API and hosting surfaces first (<Tooltip term="amplify" /> and <Tooltip term="api-gateway" label="API Gateway" /> workflow)
+2. Destroy <Tooltip term="terraform" />-managed infrastructure
+3. Deprovision device credentials and <Tooltip term="iot-core" label="IoT Core" /> registration
+
+## Terraform destroy
+
+```bash
+terraform -chdir=terraform destroy
+```
+
+## Device deprovisioning
+
+Full teardown (device + CloudFormation stack):
+
+```bash
+FORCE=1 REMOVE_LOCAL=1 AWS_REGION=ap-southeast-2 THING_NAME=esp32-c ./aws/deprovision.sh
+```
+
+Partial cleanup:
+
+```bash
+# Device only — keep Phase 1 CloudFormation stack
+FORCE=1 DEVICE_ONLY=1 AWS_REGION=ap-southeast-2 THING_NAME=esp32-c ./aws/deprovision.sh
+
+# Shared infra only — delete stack esp32-demo-phase1; keep Thing/certs
+FORCE=1 INFRA_ONLY=1 AWS_REGION=ap-southeast-2 ./aws/deprovision.sh
+```
+
+`FORCE=1` is required — the script deletes AWS resources.
+
+## Source and supporting links
+
+- Source repository: [esp32-aws-iot-demo](https://github.com/jajera/esp32-aws-iot-demo)
+- Payload spec: [PAYLOAD.md](https://github.com/jajera/esp32-aws-iot-demo/blob/main/docs/PAYLOAD.md)
+- Firmware/system architecture: [ARCHITECTURE.md](https://github.com/jajera/esp32-aws-iot-demo/blob/main/docs/ARCHITECTURE.md)
+- AWS provisioning notes: [aws/README.md](https://github.com/jajera/esp32-aws-iot-demo/blob/main/aws/README.md)
+- Terraform notes: [terraform/README.md](https://github.com/jajera/esp32-aws-iot-demo/blob/main/terraform/README.md)

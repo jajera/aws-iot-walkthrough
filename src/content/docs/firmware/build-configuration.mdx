@@ -1,0 +1,38 @@
+---
+title: Build Configuration
+description: PlatformIO target configuration, dependencies, and header generation workflow.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+For the full `firmware/` tree, see [Source Layout](/aws-iot-walkthrough/firmware/source-layout/).
+
+## PlatformIO baseline
+
+- Board: <Tooltip term="esp32" label="ESP32-S3-N16R8" />
+- Framework: Arduino
+- Environment: `esp32-s3-n16r8`
+
+Pinned in [`firmware/platformio.ini`](https://github.com/jajera/esp32-aws-iot-demo/blob/main/firmware/platformio.ini) on `main`.
+
+## Key dependencies
+
+- `256dpi/MQTT @ ^2.5.3` — <Tooltip term="mqtt" label="MQTT" /> client
+- `bblanchon/ArduinoJson @ ^7.0.0` — JSON serialization
+
+The demo repo also defines a `native` test environment for host-side unit tests under `firmware/test/native/`. That environment is out of scope for this walkthrough.
+
+## Header generation step
+
+After [Device Provisioning](/aws-iot-walkthrough/provisioning/device-provisioning/), generate headers:
+
+```bash
+./scripts/generate-headers.sh
+```
+
+Generated outputs:
+
+- `firmware/include/config.h`
+- `firmware/include/certs.h`
+
+These headers compile environment settings and provisioned certificate material into the <Tooltip term="firmware" /> build.

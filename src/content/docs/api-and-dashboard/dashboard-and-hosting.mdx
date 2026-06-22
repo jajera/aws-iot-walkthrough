@@ -1,0 +1,53 @@
+---
+title: Dashboard and Hosting
+description: Run the dashboard locally and deploy it through Amplify hosting.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+For the `web/` app structure and polling behavior, see [Dashboard Source Layout](/aws-iot-walkthrough/api-and-dashboard/dashboard-source-layout/).
+
+## Run dashboard locally
+
+```bash
+cd web
+npm ci
+VITE_API_URL="$(terraform -chdir=../terraform output -raw query_api_invoke_url)" npm run dev
+```
+
+Verify in browser:
+
+- latest telemetry card renders
+- recent event list renders
+- data refreshes on polling interval
+
+## Amplify deploy procedure
+
+```bash
+API_URL="$(terraform -chdir=terraform output -raw query_api_invoke_url)"
+AMPLIFY_APP_ID="$(terraform -chdir=terraform output -raw amplify_app_id)"
+AMPLIFY_BRANCH=main VITE_API_URL="${API_URL}" ./scripts/deploy-amplify.sh
+```
+
+Required environment variables in this flow:
+
+- `API_URL`
+- `AMPLIFY_APP_ID`
+- `AMPLIFY_BRANCH`
+- `VITE_API_URL`
+
+Retrieve hosted URL:
+
+```bash
+terraform -chdir=terraform output amplify_app_url
+```
+
+## Rollout checklist
+
+1. Device publishes telemetry and button events.
+2. <Tooltip term="cloudwatch" label="Cloud" /> logs receive both payload types.
+3. API returns latest telemetry and recent events.
+4. Dashboard renders live API-backed data.
+5. Browser does not access <Tooltip term="dynamodb" /> directly.
+
+Deploy target is <Tooltip term="amplify" label="AWS Amplify" /> using the query API from <Tooltip term="terraform" /> outputs.

@@ -1,0 +1,67 @@
+---
+title: Ingest Pipeline
+description: How IoT rules, the processor Lambda, and DynamoDB persist device messages.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+After Phase 2 <Tooltip term="terraform" /> apply, device MQTT messages follow two parallel paths: <Tooltip term="cloudwatch" label="CloudWatch Logs" /> (Phase 1 verification preserved) and <Tooltip term="dynamodb" /> ingest (new in Phase 2).
+
+For module paths, see [Stack Source Layout](/aws-iot-walkthrough/infrastructure/stack-source-layout/).
+
+## Data flow
+
+```text
+ESP32 MQTT publish
+    → IoT Core
+    → esp32_demo_telemetry_rule / esp32_demo_events_rule
+        ├─→ CloudWatch Logs (/aws/iot/esp32-demo/telemetry|events)
+        └─→ lambda_processor (handler.py)
+                └─→ DynamoDB telemetry or events table
+```
+
+Topic patterns match the <Tooltip term="payload-contract" label="payload contract" />:
+
+- `devices/+/telemetry`
+- `devices/+/events`
+
+## Processor Lambda (`handler.py`)
+
+Source: [`terraform/modules/lambda_processor/src/handler.py`](https://github.com/jajera/esp32-aws-iot-demo/blob/main/terraform/modules/lambda_processor/src/handler.py)
+
+Responsibilities:
+
+1. **Normalize** — parse IoT rule event JSON (device payload)
+2. **Validate** — require `device_id`, `ts`, `type`
+3. **Classify** — `type=button` → events table; otherwise telemetry
+4. **Timestamp** — use `ts` when positive; if `ts` is `0` or missing, set `effective_ts` to ingest time and `ts_fallback_used=true`
+5. **Dedupe** — `record_id` from SHA-256 of payload; conditional write avoids duplicate keys
+6. **Write** — `put_item` to telemetry or events table
+
+Stored item shape (simplified):
+
+- `device_id`, `record_id`, `record_type` (`telemetry` or `event`)
+- `effective_ts`, `ts_original`, `ts_fallback_used`, `ingest_ts`
+- `payload` — full MQTT JSON body
+
+## DynamoDB tables
+
+Both tables use the same key design (from `modules/dynamodb`):
+
+- Primary key: `device_id` (hash) + `record_id` (range)
+- GSI `device_ts_idx`: `device_id` + `effective_ts` — used by the query Lambda for latest/recent reads
+
+Table names come from Terraform outputs `telemetry_table_name` and `events_table_name`.
+
+## Verify ingest
+
+After the device is publishing and Terraform is applied:
+
+```bash
+TELEMETRY_TABLE="$(terraform -chdir=terraform output -raw telemetry_table_name)"
+EVENTS_TABLE="$(terraform -chdir=terraform output -raw events_table_name)"
+aws dynamodb scan --table-name "$TELEMETRY_TABLE" --max-items 5
+aws dynamodb scan --table-name "$EVENTS_TABLE" --max-items 5
+```
+
+See [Terraform Provisioning](/aws-iot-walkthrough/infrastructure/terraform-provisioning/) for the full apply workflow.
