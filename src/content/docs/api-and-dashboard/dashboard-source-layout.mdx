@@ -1,0 +1,105 @@
+---
+title: Dashboard Source Layout
+description: Map the demo repo web app structure and how it consumes the query API.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+The dashboard is a Vite static app in the <Tooltip term="demo-repo" label="demo repository" /> under `web/`. Browse on GitHub: [esp32-aws-iot-demo/web](https://github.com/jajera/esp32-aws-iot-demo/tree/main/web).
+
+For local run and <Tooltip term="amplify" /> deploy commands, see [Dashboard and Hosting](/aws-iot-walkthrough/api-and-dashboard/dashboard-and-hosting/). For API routes and responses, see [Query API Source Layout](/aws-iot-walkthrough/api-and-dashboard/query-api-source-layout/).
+
+## Directory tree
+
+```text
+web/
+├── index.html
+├── package.json
+├── public/
+│   └── favicon.svg
+└── src/
+    ├── main.js       # entry point — UI, fetch, polling
+    ├── style.css
+    ├── theme.js      # light/dark toggle
+    ├── format.js     # timestamps, units, labels
+    └── charts.js     # sparklines and stat bars
+```
+
+## Entry point (`main.js`)
+
+[`web/src/main.js`](https://github.com/jajera/esp32-aws-iot-demo/blob/main/web/src/main.js) bootstraps the single-page UI:
+
+1. Read `VITE_API_URL` (build-time) — base URL for <Tooltip term="api-gateway" label="API Gateway" />
+2. Render device input, stat tiles, telemetry detail, network detail, events list
+3. On refresh — parallel `fetch` to:
+   - `/devices/{deviceId}/telemetry/latest`
+   - `/devices/{deviceId}/events?limit=20`
+4. Poll every 15 s by default (`VITE_POLL_INTERVAL_MS`, overridable)
+
+Optional env vars: `VITE_DEFAULT_DEVICE_ID` (default `esp32-c`).
+
+## UI modules
+
+<table>
+  <thead>
+    <tr>
+      <th>File</th>
+      <th>Role</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>main.js</code>
+      </td>
+      <td>Layout, fetch orchestration, polling, live/stale pill</td>
+    </tr>
+    <tr>
+      <td>
+        <code>format.js</code>
+      </td>
+      <td>
+        Human-readable timestamps, RSSI/temp/heap labels, Wi-Fi status text
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>charts.js</code>
+      </td>
+      <td>Inline SVG sparklines and stat bar visuals</td>
+    </tr>
+    <tr>
+      <td>
+        <code>theme.js</code>
+      </td>
+      <td>Theme persistence and toggle control</td>
+    </tr>
+    <tr>
+      <td>
+        <code>style.css</code>
+      </td>
+      <td>Layout and component styling</td>
+    </tr>
+  </tbody>
+</table>
+
+## Data displayed
+
+From latest telemetry payload (same fields as firmware contract):
+
+- Stat tiles: RSSI, chip temperature, free heap, uptime
+- Detail panels: connectivity metrics + device/network metadata (`chip_model`, `wifi_ssid`, IP, etc.)
+- Events list: button presses from `/events` endpoint
+
+The browser only talks to the query API — not <Tooltip term="dynamodb" /> (see [Policies and IAM](/aws-iot-walkthrough/security/policies-and-iam/)).
+
+## Build and runtime config
+
+Local dev injects API URL at runtime:
+
+```bash
+VITE_API_URL="$(terraform -chdir=../terraform output -raw query_api_invoke_url)" npm run dev
+```
+
+<Tooltip term="amplify" /> deploy bakes `VITE_API_URL` into the static build via
+`scripts/deploy-amplify.sh` or Terraform `deploy_amplify_on_apply`.

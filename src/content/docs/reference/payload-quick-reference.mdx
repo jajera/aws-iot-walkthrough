@@ -1,0 +1,193 @@
+---
+title: Payload Quick Reference
+description: Field-level quick reference for telemetry and event payloads.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+## Payload fields
+
+Fields from the <Tooltip term="payload-contract" label="payload contract" /> for <Tooltip term="mqtt" label="MQTT" /> telemetry and events:
+
+<table>
+  <thead>
+    <tr>
+      <th>Field Name</th>
+      <th>Data Type</th>
+      <th>Example Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>device_id</code>
+      </td>
+      <td>string</td>
+      <td>
+        <code>esp32-c</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>ts</code>
+      </td>
+      <td>integer (epoch seconds)</td>
+      <td>
+        <code>1782117400</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>type</code> (telemetry)
+      </td>
+      <td>string</td>
+      <td>
+        <code>connectivity</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>rssi</code>
+      </td>
+      <td>integer (dBm)</td>
+      <td>
+        <code>-54</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>uptime_s</code>
+      </td>
+      <td>integer (seconds)</td>
+      <td>
+        <code>73987</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>heap_free</code>
+      </td>
+      <td>integer (bytes)</td>
+      <td>
+        <code>244916</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>chip_temp_c</code>
+      </td>
+      <td>number (Celsius)</td>
+      <td>
+        <code>29.5</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>chip_model</code>
+      </td>
+      <td>string</td>
+      <td>
+        <code>ESP32-S3</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>cpu_mhz</code>
+      </td>
+      <td>integer</td>
+      <td>
+        <code>240</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>flash_bytes</code>
+      </td>
+      <td>integer (bytes)</td>
+      <td>
+        <code>16777216</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>wifi_ssid</code>
+      </td>
+      <td>string</td>
+      <td>
+        <code>your-wifi-ssid</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>wifi_status</code>
+      </td>
+      <td>integer</td>
+      <td>
+        <code>3</code> (connected)
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>wifi_channel</code>
+      </td>
+      <td>integer</td>
+      <td>
+        <code>10</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>wifi_ip</code>
+      </td>
+      <td>string (IPv4)</td>
+      <td>
+        <code>192.168.12.2</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>wifi_gateway</code>
+      </td>
+      <td>string (IPv4)</td>
+      <td>
+        <code>192.168.12.1</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>wifi_dns</code>
+      </td>
+      <td>string (IPv4)</td>
+      <td>
+        <code>192.168.99.1</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>clock_offset_ms</code>
+      </td>
+      <td>integer (milliseconds)</td>
+      <td>
+        <code>-62</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>type</code> (event)
+      </td>
+      <td>string</td>
+      <td>
+        <code>button</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>event</code>
+      </td>
+      <td>string</td>
+      <td>
+        <code>press</code>
+      </td>
+    </tr>
+  </tbody>
+</table>

@@ -1,0 +1,55 @@
+---
+title: Terraform Provisioning
+description: Provision the serverless stack and verify persistence in DynamoDB.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+For Terraform module layout and Lambda paths, see [Stack Source Layout](/aws-iot-walkthrough/infrastructure/stack-source-layout/) and [Ingest Pipeline](/aws-iot-walkthrough/infrastructure/ingest-pipeline/).
+
+## Provision shared infrastructure
+
+From the <Tooltip term="demo-repo" label="demo repository" /> root:
+
+```bash
+cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+terraform -chdir=terraform init
+terraform -chdir=terraform plan
+terraform -chdir=terraform apply
+```
+
+Provisioned <Tooltip term="terraform-stack" label="stack" /> summary:
+
+- <Tooltip term="iot-rules" label="IoT rules" /> fan-out
+- <Tooltip term="lambda" /> processing
+- <Tooltip term="dynamodb" /> persistence
+- Query <Tooltip term="lambda" />
+- <Tooltip term="api-gateway" label="API Gateway" /> routes
+- <Tooltip term="amplify" /> resources
+
+## Capture outputs
+
+```bash
+terraform -chdir=terraform output
+terraform -chdir=terraform output -json > terraform/outputs.dev.json
+```
+
+Required outputs:
+
+- `query_api_invoke_url`
+- `telemetry_table_name`
+- `events_table_name`
+- `amplify_app_url`
+
+## Validate persistence in DynamoDB
+
+```bash
+TELEMETRY_TABLE="$(terraform -chdir=terraform output -raw telemetry_table_name)"
+EVENTS_TABLE="$(terraform -chdir=terraform output -raw events_table_name)"
+aws dynamodb scan --table-name "$TELEMETRY_TABLE" --max-items 5
+aws dynamodb scan --table-name "$EVENTS_TABLE" --max-items 5
+```
+
+Each scan should return at least one item after device publishes have flowed through the ingest path.
+
+Continue with [Query API Validation](/aws-iot-walkthrough/api-and-dashboard/query-api-validation/) for Phase 3.

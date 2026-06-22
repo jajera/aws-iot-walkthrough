@@ -1,0 +1,39 @@
+---
+title: Policies and IAM
+description: Apply least-privilege IoT and IAM permissions for device publish and log delivery.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+## IoT policy scope
+
+Use least-privilege <Tooltip term="iot-policy" label="IoT policy" /> statements for device operations:
+
+- `iot:Connect` scoped to the device ThingName identity
+- `iot:Publish` scoped to the device topic namespace only
+
+Recommended topic pattern:
+
+- `devices/{Thing_Name}/telemetry`
+- `devices/{Thing_Name}/events`
+
+## IoT Rules IAM role
+
+<Tooltip term="iot-rules" label="IoT Rules" /> write routed payloads to
+<Tooltip term="cloudwatch" label="CloudWatch Logs" /> for verification and
+troubleshooting. The IAM role for rule delivery is created by the
+[CloudFormation bootstrap
+stack](/aws-iot-walkthrough/provisioning/cloudformation-bootstrap/). Keep role
+permissions restricted to logs write operations, at minimum:
+
+- `logs:CreateLogGroup`
+- `logs:CreateLogStream`
+- `logs:PutLogEvents`
+
+## Browser access boundary
+
+The dashboard browser should not query <Tooltip term="dynamodb" /> directly. Data is intentionally fronted through <Tooltip term="api-gateway" label="API Gateway" /> and <Tooltip term="lambda" /> so:
+
+- data access can be validated and filtered at the API layer
+- table internals remain private from client-side code
+- <Tooltip term="iam" label="IAM" /> complexity stays server-side

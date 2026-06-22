@@ -1,0 +1,125 @@
+---
+title: Environment Variables
+description: Variable quick reference with purpose and first-use location in this walkthrough.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+## Variable reference
+
+<table>
+  <thead>
+    <tr>
+      <th>Variable</th>
+      <th>Purpose</th>
+      <th>First Set In</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>WIFI_SSID</code>
+      </td>
+      <td>
+        Wi-Fi SSID used by <Tooltip term="firmware" />
+      </td>
+      <td>
+        <code>prerequisites/hardware-and-software-requirements</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>WIFI_PASSWORD</code>
+      </td>
+      <td>Wi-Fi password used by firmware</td>
+      <td>
+        <code>prerequisites/hardware-and-software-requirements</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>THING_NAME</code>
+      </td>
+      <td>
+        Device identity used in certs and <Tooltip term="mqtt" label="MQTT" />{" "}
+        topics
+      </td>
+      <td>
+        <code>prerequisites/hardware-and-software-requirements</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>AWS_REGION</code>
+      </td>
+      <td>
+        <Tooltip term="aws" /> region for CLI and log lookups
+      </td>
+      <td>
+        <code>prerequisites/hardware-and-software-requirements</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>API_URL</code>
+      </td>
+      <td>Base URL for query API calls</td>
+      <td>
+        <code>api-and-dashboard/query-api-validation</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>VITE_API_URL</code>
+      </td>
+      <td>
+        Dashboard API base URL for local/
+        <Tooltip term="amplify" /> runtime
+      </td>
+      <td>
+        <code>api-and-dashboard/dashboard-and-hosting</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>AMPLIFY_APP_ID</code>
+      </td>
+      <td>Target Amplify app for deploy script</td>
+      <td>
+        <code>api-and-dashboard/dashboard-and-hosting</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>AMPLIFY_BRANCH</code>
+      </td>
+      <td>Amplify branch target for deployment</td>
+      <td>
+        <code>api-and-dashboard/dashboard-and-hosting</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>TELEMETRY_TABLE</code>
+      </td>
+      <td>
+        Runtime shell variable mapped to telemetry <Tooltip term="dynamodb" />{" "}
+        table
+      </td>
+      <td>
+        <code>infrastructure/terraform-provisioning</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>EVENTS_TABLE</code>
+      </td>
+      <td>Runtime shell variable mapped to events DynamoDB table</td>
+      <td>
+        <code>infrastructure/terraform-provisioning</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+`TELEMETRY_TABLE` and `EVENTS_TABLE` are runtime shell variables derived from <Tooltip term="terraform" /> outputs `telemetry_table_name` and `events_table_name`.

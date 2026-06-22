@@ -1,0 +1,29 @@
+---
+title: Linux USB Setup
+description: Configure Linux host USB permissions for reliable ESP32 flashing and serial access.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+## Run one-time USB setup
+
+From the <Tooltip term="demo-repo" label="demo repository" /> root:
+
+```bash
+sudo ./scripts/setup-linux-usb.sh
+```
+
+After script completion:
+
+1. Log out and back in (or reboot)
+2. Reconnect the <Tooltip term="esp32" label="ESP32" /> board over USB
+
+## Verify host access
+
+```bash
+groups | grep dialout
+lsusb
+ls /dev/ttyACM*
+```
+
+Expected result: your user has serial access and the board enumerates as a serial device.

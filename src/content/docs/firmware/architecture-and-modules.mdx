@@ -1,0 +1,42 @@
+---
+title: Architecture and Modules
+description: Understand firmware module responsibilities before build and flash steps.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+For file paths and `main.cpp` flow, see [Source Layout](/aws-iot-walkthrough/firmware/source-layout/).
+
+## Firmware module overview
+
+### WiFiManager (`wifi_manager.cpp`)
+
+Manages Wi-Fi connectivity with reconnect handling and exponential backoff behavior when association fails.
+
+### NTPSync (`ntp_sync.cpp`)
+
+Attempts NTP time synchronization with an approximately 30-second timeout window; if sync fails, payload timestamp fallback behavior uses `ts=0`.
+
+### MQTTManager (`mqtt_manager.cpp`)
+
+Establishes TLS <Tooltip term="mqtt" /> sessions to <Tooltip term="iot-core" label="AWS IoT Core" /> using <Tooltip term="x509" label="X.509" /> auth and <Tooltip term="qos" label="QoS 1" /> publish semantics.
+
+### TelemetryPublisher (`telemetry_publisher.cpp`)
+
+Publishes connectivity telemetry on a fixed interval (about every 60 seconds), including RSSI, uptime, heap, chip temperature, board metadata, Wi-Fi association details, and NTP clock offset.
+
+### EventPublisher (`event_publisher.cpp`)
+
+Publishes button press events from GPIO0 using debounced input handling to avoid duplicate edge noise.
+
+### StatusLed (`status_led.cpp`)
+
+Drives onboard RGB status indication; blue flash indicates a successful publish path.
+
+### WatchdogSupervisor (`watchdog_supervisor.cpp`)
+
+Uses task watchdog supervision and connectivity timeout guards to recover from stuck runtime states.
+
+### Logger (`logger.h`)
+
+Emits serial-tagged logs for Wi-Fi, MQTT, telemetry, and event status checks during bring-up and troubleshooting.

@@ -1,0 +1,59 @@
+---
+title: Build Flash and Monitor
+description: Compile, upload, and validate runtime behavior through serial logs and LED signals.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+## Build and upload
+
+```bash
+pio run -d firmware -e esp32-s3-n16r8
+pio run -d firmware -e esp32-s3-n16r8 -t upload
+```
+
+One-liner upload and monitor:
+
+```bash
+pio run -d firmware -e esp32-s3-n16r8 -t upload && pio device monitor -d firmware -b 115200
+```
+
+Pin upload port when needed:
+
+```bash
+pio run -d firmware -e esp32-s3-n16r8 -t upload --upload-port /dev/ttyACM0
+```
+
+## BOOT + RST fallback
+
+If upload stalls at `Connecting...`:
+
+1. Close any active serial monitor
+2. Hold **BOOT**
+3. Tap **RST/EN**
+4. Release **BOOT**
+5. Retry upload
+
+## Serial output markers
+
+Run monitor:
+
+```bash
+pio device monitor -d firmware -b 115200
+```
+
+Look for:
+
+- `[wifi] connected`
+- `[mqtt] connected`
+- `[telemetry] published`
+- `[event] published`
+
+Successful `[mqtt] connected` confirms <Tooltip term="mqtt" /> over <Tooltip term="mtls" label="mTLS" /> to <Tooltip term="iot-core" label="IoT Core" />.
+
+## LED behavior
+
+Blue RGB flash indicates successful publish behavior.
+
+- Default LED route is `GPIO48`
+- Some board variants require `PIN_NEOPIXEL=38`

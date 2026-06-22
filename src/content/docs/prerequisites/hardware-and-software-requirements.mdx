@@ -1,0 +1,285 @@
+---
+title: Hardware and Software Requirements
+description: Prepare hardware, tools, AWS access, and environment variables before flashing.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+import Tooltip from "@/components/Tooltip.astro";
+
+## Hardware requirements
+
+- <Tooltip term="esp32" label="ESP32-S3-N16R8" /> board
+- USB data cable (charge-only cables are not sufficient)
+- 2.4 GHz Wi-Fi network with SSID and password available
+
+## Software requirements
+
+Install these tools on your Linux host before starting the walkthrough. Use the manual steps below for Ubuntu or Red Hat family systems (RHEL, Fedora, Amazon Linux).
+
+<table>
+  <thead>
+    <tr>
+      <th>Tool</th>
+      <th>Verify</th>
+      <th>Used in this walkthrough</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <Tooltip term="git" />
+      </td>
+      <td>
+        <code>git --version</code>
+      </td>
+      <td>
+        Clone the <Tooltip term="demo-repo" label="demo repository" />
+      </td>
+    </tr>
+    <tr>
+      <td>AWS CLI v2</td>
+      <td>
+        <code>aws --version</code>
+      </td>
+      <td>
+        Provision, <Tooltip term="cloudwatch" label="CloudWatch" /> logs,{" "}
+        <Tooltip term="dynamodb" /> checks
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <Tooltip term="platformio" label="PlatformIO" /> (<code>pio</code>)
+      </td>
+      <td>
+        <code>pio --version</code>
+      </td>
+      <td>
+        Build and flash <Tooltip term="firmware" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <Tooltip term="terraform" />
+      </td>
+      <td>
+        <code>terraform version</code>
+      </td>
+      <td>Phase 2 infrastructure</td>
+    </tr>
+    <tr>
+      <td>Node.js 22</td>
+      <td>
+        <code>node --version</code>
+      </td>
+      <td>
+        Dashboard local run and <Tooltip term="amplify" /> deploy
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+This repository targets Node.js **22** (see `.nvmrc` in the docs site repo).
+
+Automated installs are available from <Tooltip term="cli-tools" label="jdevto/cli-tools" /> under each Red Hat subsection below.
+
+### Git
+
+#### Git on Ubuntu
+
+```bash
+sudo apt update && sudo apt install -y git
+```
+
+#### Git on Red Hat
+
+```bash
+sudo dnf install -y git
+```
+
+Or install with [install_git.sh](https://github.com/jdevto/cli-tools/blob/main/docs/install_git.md):
+
+```bash
+bash <(curl -s https://raw.githubusercontent.com/jdevto/cli-tools/main/scripts/install_git.sh) install
+```
+
+### AWS CLI v2
+
+#### AWS CLI on Ubuntu
+
+```bash
+sudo apt update && sudo apt install -y curl unzip
+curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip
+unzip -q awscliv2.zip
+sudo ./aws/install
+rm -rf aws awscliv2.zip
+```
+
+#### AWS CLI on Red Hat
+
+```bash
+sudo dnf install -y curl unzip
+curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip
+unzip -q awscliv2.zip
+sudo ./aws/install
+rm -rf aws awscliv2.zip
+```
+
+Or install with [install_aws_cli.sh](https://github.com/jdevto/cli-tools/blob/main/docs/install_aws_cli.md):
+
+```bash
+bash <(curl -s https://raw.githubusercontent.com/jdevto/cli-tools/main/scripts/install_aws_cli.sh) install
+```
+
+### Terraform
+
+#### Terraform on Ubuntu
+
+```bash
+sudo apt update && sudo apt install -y curl gnupg software-properties-common
+curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(. /etc/os-release && echo "$VERSION_CODENAME") main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install -y terraform
+```
+
+#### Terraform on Red Hat
+
+```bash
+sudo dnf install -y curl gnupg2
+sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+sudo dnf install -y terraform
+```
+
+Or install with [install_terraform.sh](https://github.com/jdevto/cli-tools/blob/main/docs/install_terraform.md):
+
+```bash
+bash <(curl -s https://raw.githubusercontent.com/jdevto/cli-tools/main/scripts/install_terraform.sh) install
+```
+
+### PlatformIO
+
+#### PlatformIO on Ubuntu
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py -o get-platformio.py
+python3 get-platformio.py
+rm get-platformio.py
+export PATH="$HOME/.platformio/penv/bin:$PATH"
+```
+
+If your default Python is a pre-release build, use a stable interpreter:
+
+```bash
+python3.12 get-platformio.py
+```
+
+#### PlatformIO on Red Hat
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py -o get-platformio.py
+python3 get-platformio.py
+rm get-platformio.py
+export PATH="$HOME/.platformio/penv/bin:$PATH"
+```
+
+Or install with [install_pio.sh](https://github.com/jdevto/cli-tools/blob/main/docs/install_pio.md):
+
+```bash
+bash <(curl -s https://raw.githubusercontent.com/jdevto/cli-tools/main/scripts/install_pio.sh) install
+```
+
+Add PlatformIO to your `PATH` in a new shell, or append to `~/.bashrc` / `~/.zshrc`:
+
+```bash
+export PATH="$HOME/.platformio/penv/bin:$PATH"
+```
+
+### Node.js 22
+
+#### Node.js on Ubuntu
+
+```bash
+NODE_VERSION=22.14.0
+curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" -o node.tar.xz
+mkdir -p "$HOME/.local/node"
+tar -xJf node.tar.xz -C "$HOME/.local/node" --strip-components=1
+rm node.tar.xz
+export PATH="$HOME/.local/node/bin:$PATH"
+```
+
+Persist `PATH` in `~/.bashrc` or `~/.zshrc`:
+
+```bash
+echo 'export PATH="$HOME/.local/node/bin:$PATH"' >> ~/.bashrc
+```
+
+#### Node.js on Red Hat
+
+```bash
+NODE_VERSION=22.14.0
+curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" -o node.tar.xz
+mkdir -p "$HOME/.local/node"
+tar -xJf node.tar.xz -C "$HOME/.local/node" --strip-components=1
+rm node.tar.xz
+export PATH="$HOME/.local/node/bin:$PATH"
+```
+
+Or install with [install_npm.sh](https://github.com/jdevto/cli-tools/blob/main/docs/install_npm.md):
+
+```bash
+NODE_VERSION=22 bash <(curl -s https://raw.githubusercontent.com/jdevto/cli-tools/main/scripts/install_npm.sh) install
+```
+
+<Aside type="tip">
+  cli-tools scripts are idempotent and skip when a tool is already installed.
+  Open a new shell (or `source ~/.bashrc`) after PlatformIO and Node.js installs
+  so `PATH` updates apply.
+</Aside>
+
+### Verify your toolchain
+
+```bash
+git --version
+aws --version
+pio --version
+terraform version
+node --version
+npm --version
+```
+
+## AWS account requirements
+
+Use an <Tooltip term="iam" label="IAM" /> principal with permissions to manage services used in this walkthrough:
+
+- <Tooltip term="iot-core" label="AWS IoT Core" />
+- <Tooltip term="iam" label="IAM" />
+- CloudFormation
+- <Tooltip term="cloudwatch" label="CloudWatch Logs" />
+- <Tooltip term="lambda" />
+- <Tooltip term="dynamodb" />
+- <Tooltip term="api-gateway" label="API Gateway" />
+- <Tooltip term="amplify" />
+
+## Export runtime variables
+
+```bash
+export WIFI_SSID="your-ssid"
+export WIFI_PASSWORD="your-password"
+export THING_NAME="esp32-c"
+export AWS_REGION="ap-southeast-2"
+```
+
+Replace placeholder values with your own configuration before provisioning and flashing.
+
+## Linux one-time USB setup
+
+```bash
+sudo ./scripts/setup-linux-usb.sh
+```
+
+Then log out/in (or reboot), unplug/replug board, and verify access:
+
+```bash
+groups | grep dialout
+lsusb
+ls /dev/ttyACM*
+```

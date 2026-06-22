@@ -1,0 +1,36 @@
+---
+title: Certificate Provisioning
+description: Understand device certificate trust, TLS, and safe credential handling.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+Operational provisioning commands live in [Device Provisioning](/aws-iot-walkthrough/provisioning/device-provisioning/). This page covers the security model and credential practices.
+
+## TLS and authentication model
+
+- Device authentication uses <Tooltip term="x509" label="X.509" /> certificates
+- <Tooltip term="mqtt" /> transport uses TLS 1.2
+  <Tooltip term="mtls" label="mutual authentication" /> against
+  <Tooltip term="iot-core" label="AWS IoT Core" />
+- Firmware MQTT connections use `WiFiClientSecure` with <Tooltip term="qos" label="QoS 1" /> publishing
+
+## PEM files and their purpose
+
+- Device certificate PEM: identifies the specific device identity to <Tooltip term="iot-core" label="AWS IoT Core" />
+- Private key PEM: proves possession of that certificate identity
+- Root CA PEM: validates the AWS IoT endpoint certificate chain
+
+After certificate creation, activation and registration steps make the certificate usable for MQTT connections.
+
+## Credential management practices
+
+- Keep PEM artifacts ignored by git
+- Generate certs per device instead of sharing one keypair
+- Restrict file permissions to owner-read-only where practical
+
+```bash
+chmod 400 firmware/certs/*.pem
+```
+
+- Prefer storing long-lived credential material outside the repository working tree

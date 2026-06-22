@@ -1,0 +1,55 @@
+---
+title: End-to-End Validation
+description: Verify telemetry and button events arrive in AWS before full infrastructure rollout.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+## Tail telemetry and event logs
+
+```bash
+export AWS_REGION=ap-southeast-2
+aws logs tail /aws/iot/esp32-demo/telemetry --follow
+aws logs tail /aws/iot/esp32-demo/events --follow
+```
+
+Query recent entries:
+
+```bash
+START=$(($(date +%s) * 1000 - 600000))
+aws logs filter-log-events --log-group-name /aws/iot/esp32-demo/telemetry --start-time "$START"
+aws logs filter-log-events --log-group-name /aws/iot/esp32-demo/events --start-time "$START"
+```
+
+## Diagnostics if logs are empty
+
+```bash
+echo "$AWS_REGION"
+aws logs tail /aws/iot/esp32-demo/errors --since 1h
+aws iot get-topic-rule --rule-name esp32_demo_telemetry_rule --query 'rule.ruleDisabled'
+aws iot get-topic-rule --rule-name esp32_demo_events_rule --query 'rule.ruleDisabled'
+```
+
+Expected diagnostics:
+
+- Rule disabled checks return `false`
+- Error log group is empty or only transient entries
+
+## Phase 1 pass criteria
+
+This completes Phase 1 (the <Tooltip term="pretest" /> flow):
+
+- Upload succeeds with ESP32-S3 detection and verified hash
+- Serial output shows telemetry publish activity
+- BOOT press emits an event publish log
+- <Tooltip term="cloudwatch" label="CloudWatch" /> receives telemetry with
+  `device_id`, `ts`, and `type=connectivity`
+- <Tooltip term="cloudwatch" label="CloudWatch" /> receives events with
+  `device_id`, `ts`, `type=button`, and `event=press`
+
+## Expected CloudWatch payload shape
+
+- Telemetry entries include `device_id`, `ts`, `type`, and metric fields
+- Event entries include `device_id`, `ts`, `type=button`, and `event=press`
+
+Continue with [Terraform Provisioning](/aws-iot-walkthrough/infrastructure/terraform-provisioning/) for Phase 2.

@@ -1,0 +1,43 @@
+---
+title: Query API Validation
+description: Verify telemetry and event endpoints for expected success and not-found behavior.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+For routes, handler code, and response shapes, see [Query API Source Layout](/aws-iot-walkthrough/api-and-dashboard/query-api-source-layout/).
+
+## Prepare API URL
+
+```bash
+API_URL="$(terraform -chdir=terraform output -raw query_api_invoke_url)"
+```
+
+## Validate telemetry latest endpoint
+
+```bash
+curl -i "${API_URL}/devices/esp32-c/telemetry/latest"
+```
+
+Expected for an existing device: HTTP `200`.
+
+## Validate events endpoint
+
+```bash
+curl -i "${API_URL}/devices/esp32-c/events?limit=10"
+```
+
+Expected for an existing device: HTTP `200`.
+
+## Validate unknown device behavior
+
+```bash
+curl -i "${API_URL}/devices/unknown-device-123/telemetry/latest"
+curl -i "${API_URL}/devices/unknown-device-123/events?limit=10"
+```
+
+Expected for unknown device IDs: HTTP `404`.
+
+The query API is fronted by <Tooltip term="api-gateway" label="API Gateway" /> and reads from <Tooltip term="dynamodb" /> via <Tooltip term="lambda" />.
+
+Continue with [Dashboard and Hosting](/aws-iot-walkthrough/api-and-dashboard/dashboard-and-hosting/).

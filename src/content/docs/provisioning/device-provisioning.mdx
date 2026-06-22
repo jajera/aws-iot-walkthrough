@@ -1,0 +1,53 @@
+---
+title: Device Provisioning
+description: Register the device Thing, certificate, and policy, then generate firmware headers.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+import Tooltip from "@/components/Tooltip.astro";
+
+Register a per-device <Tooltip term="thing" />, certificate, and <Tooltip term="iot-policy" label="IoT policy" />, then produce firmware build inputs. Requires [CloudFormation Bootstrap](/aws-iot-walkthrough/provisioning/cloudformation-bootstrap/) (or an existing <Tooltip term="phase1-stack" label="Phase 1 stack" />) first.
+
+## Full provisioning flow
+
+From the <Tooltip term="demo-repo" label="demo repository" /> root:
+
+```bash
+export WIFI_SSID="your-ssid"
+export WIFI_PASSWORD="your-password"
+export THING_NAME="esp32-c"
+export AWS_REGION=ap-southeast-2
+
+./aws/provision.sh
+./scripts/generate-headers.sh
+```
+
+`provision.sh` runs in order:
+
+1. `provision-infra.sh` — CloudFormation bootstrap (skipped if stack already exists)
+2. `provision-device.sh` — Thing, certificate, policy, local PEM files
+
+If bootstrap is already done, run device provisioning only:
+
+```bash
+./aws/provision-device.sh
+./scripts/generate-headers.sh
+```
+
+## Outputs
+
+- PEM files in `firmware/certs/` (gitignored)
+- `AWS_IOT_ENDPOINT=...` printed to stdout
+- After `generate-headers.sh`:
+  - `firmware/include/config.h` — Wi-Fi, thing name, endpoint, publish interval
+  - `firmware/include/certs.h` — PEM material for the build
+
+`generate-headers.sh` requires `WIFI_SSID`, `WIFI_PASSWORD`, and `THING_NAME`.
+
+For TLS model and PEM handling practices, see [Certificate Provisioning](/aws-iot-walkthrough/security/certificate-provisioning/). For how headers are used in the build, see [Build Configuration](/aws-iot-walkthrough/firmware/build-configuration/).
+
+<Aside type="caution" title="Do not re-provision unnecessarily">
+
+Re-running `provision-device.sh` on an already-provisioned Thing creates a **second** certificate. Use it only when rotating credentials or provisioning a new device.
+
+</Aside>

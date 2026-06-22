@@ -1,0 +1,72 @@
+---
+title: CloudFormation Bootstrap
+description: Deploy shared Phase 1 AWS infrastructure with CloudFormation before device provisioning.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+
+Phase 1 shared infrastructure is deployed with CloudFormation — not <Tooltip term="terraform" /> and not per-device. This bootstrap creates the <Tooltip term="iot-rules" label="IoT rules" /> and <Tooltip term="cloudwatch" label="CloudWatch" /> log groups used in [Cloud Verification](/aws-iot-walkthrough/cloud-verification/end-to-end-validation/).
+
+From the <Tooltip term="demo-repo" label="demo repository" /> root, with `AWS_REGION` set (see [Prerequisites](/aws-iot-walkthrough/prerequisites/hardware-and-software-requirements/)):
+
+```bash
+export AWS_REGION=ap-southeast-2
+./aws/provision-infra.sh
+```
+
+`provision-infra.sh` is also step 1 of `./aws/provision.sh` on [Device Provisioning](/aws-iot-walkthrough/provisioning/device-provisioning/).
+
+## Stack and template
+
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Stack name</td>
+      <td>
+        <code>esp32-demo-phase1</code> (
+        <Tooltip term="phase1-stack" label="Phase 1 stack" />)
+      </td>
+    </tr>
+    <tr>
+      <td>Template</td>
+      <td>
+        <code>aws/cloudformation/phase1-infra.yaml</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+## Resources created
+
+- <Tooltip term="cloudwatch" label="CloudWatch Logs" /> groups: -
+  `/aws/iot/esp32-demo/telemetry` - `/aws/iot/esp32-demo/events` -
+  `/aws/iot/esp32-demo/errors`
+- <Tooltip term="iot-rules" label="IoT rules" />: - `esp32_demo_telemetry_rule`
+  - `esp32_demo_events_rule`
+- IAM role for rule → CloudWatch delivery (see [Policies and IAM](/aws-iot-walkthrough/security/policies-and-iam/))
+
+## Verify bootstrap
+
+```bash
+aws cloudformation describe-stacks --stack-name esp32-demo-phase1 --query 'Stacks[0].StackStatus'
+aws iot get-topic-rule --rule-name esp32_demo_telemetry_rule --query 'rule.ruleDisabled'
+aws iot get-topic-rule --rule-name esp32_demo_events_rule --query 'rule.ruleDisabled'
+```
+
+Expected: stack status `CREATE_COMPLETE` or `UPDATE_COMPLETE`; both `ruleDisabled` queries return `false`.
+
+## Phase 1 vs Phase 2
+
+This CloudFormation bootstrap is what makes Phase 1 <Tooltip term="pretest" /> CloudWatch verification work. Phase 2 `terraform apply` (see [Terraform Provisioning](/aws-iot-walkthrough/infrastructure/terraform-provisioning/)) provisions the full serverless ingest and query stack.
+
+## If bootstrap fails or logs stay empty
+
+- Confirm `aws sts get-caller-identity` works and your principal can create IoT, IAM, CloudFormation, and CloudWatch Logs resources in `AWS_REGION`.
+- Re-run `./aws/provision-infra.sh` if rules or log groups are missing.
+- For partial infra teardown, see [Teardown and Cleanup](/aws-iot-walkthrough/reference/teardown-and-cleanup/) (`INFRA_ONLY=1`).

@@ -1,0 +1,234 @@
+---
+title: Source Layout
+description: Map the demo repo firmware directory to entry-point flow and file responsibilities.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+import Tooltip from "@/components/Tooltip.astro";
+
+The <Tooltip term="firmware" /> application lives in the <Tooltip term="demo-repo" label="demo repository" /> under `firmware/`, not in this walkthrough site. Browse the source on GitHub: [esp32-aws-iot-demo/firmware](https://github.com/jajera/esp32-aws-iot-demo/tree/main/firmware).
+
+For module behavior details, see [Architecture and Modules](/aws-iot-walkthrough/firmware/architecture-and-modules/).
+
+## Directory tree
+
+```text
+firmware/
+├── platformio.ini
+├── include/
+│   ├── config.example.h    # template; generated → config.h
+│   └── certs.example.h     # template; generated → certs.h
+├── src/
+│   ├── main.cpp            # entry point
+│   ├── wifi_manager.*
+│   ├── ntp_sync.*
+│   ├── mqtt_manager.*
+│   ├── telemetry_publisher.*
+│   ├── event_publisher.*
+│   ├── status_led.*
+│   ├── watchdog_supervisor.*
+│   ├── payload_codec.h
+│   ├── logger.h
+│   └── *_utils.h           # shared helpers
+└── test/                   # native unit tests (optional; not part of walkthrough)
+```
+
+## Entry point (`main.cpp`)
+
+[`firmware/src/main.cpp`](https://github.com/jajera/esp32-aws-iot-demo/blob/main/firmware/src/main.cpp) orchestrates the runtime.
+
+**Compile-time guards** — the build fails fast if generated headers are missing:
+
+- `config.h` — run [Device Provisioning](/aws-iot-walkthrough/provisioning/device-provisioning/) (`generate-headers.sh` with `WIFI_SSID`, `WIFI_PASSWORD`, `THING_NAME`)
+- `certs.h` — same flow after `./aws/provision.sh` and `generate-headers.sh`
+
+**`setup()` init order:**
+
+1. `Logger` — serial at 115200 baud
+2. `WatchdogSupervisor` — task WDT (30 s)
+3. `WiFiManager` — connect using credentials from `config.h`
+4. `NTPSync` — SNTP server from `config.h`
+5. `MQTTManager` — TLS endpoint, thing name, and PEM material from `certs.h`
+6. `TelemetryPublisher` — publish interval from `config.h`
+7. `EventPublisher` — GPIO0 BOOT button
+8. `StatusLed` — onboard RGB
+
+**`loop()` tick (~10 ms):**
+
+1. `watchdog.feed()`
+2. `wifi_manager.loop()` — reconnect with backoff when needed
+3. `ntp_sync.loop()` — when Wi-Fi is up and time not yet synced
+4. `mqtt_manager.loop()` — maintain TLS <Tooltip term="mqtt" /> session
+5. `telemetry_publisher.loop()` — periodic connectivity publish
+6. `event_publisher.loop()` — debounced button events
+7. `watchdog.checkConnectivityTimeout()` — reset if Wi-Fi + MQTT stall
+8. `status_led.loop()` — RGB animation
+
+## File reference
+
+<table>
+  <thead>
+    <tr>
+      <th>Path</th>
+      <th>Purpose</th>
+      <th>Used by</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>src/main.cpp</code>
+      </td>
+      <td>Orchestrates setup and loop</td>
+      <td>Entry</td>
+    </tr>
+    <tr>
+      <td>
+        <code>src/wifi_manager.*</code>
+      </td>
+      <td>Wi-Fi connect and exponential backoff</td>
+      <td>
+        <code>main</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>src/ntp_sync.*</code>
+      </td>
+      <td>
+        SNTP sync; <code>ts=0</code> fallback when unsynced
+      </td>
+      <td>
+        <code>main</code>, publishers
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>src/mqtt_manager.*</code>
+      </td>
+      <td>
+        TLS MQTT to <Tooltip term="iot-core" label="IoT Core" />
+      </td>
+      <td>
+        <code>main</code>, publishers
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>src/telemetry_publisher.*</code>
+      </td>
+      <td>60 s connectivity payload</td>
+      <td>
+        <code>main</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>src/event_publisher.*</code>
+      </td>
+      <td>GPIO0 BOOT button, debounced</td>
+      <td>
+        <code>main</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>src/status_led.*</code>
+      </td>
+      <td>Blue RGB flash on successful publish</td>
+      <td>telemetry</td>
+    </tr>
+    <tr>
+      <td>
+        <code>src/watchdog_supervisor.*</code>
+      </td>
+      <td>Task WDT and connectivity timeout reset</td>
+      <td>
+        <code>main</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>src/payload_codec.h</code>
+      </td>
+      <td>
+        <code>TelemetryData</code> / <code>EventData</code> JSON serialization
+      </td>
+      <td>publishers</td>
+    </tr>
+    <tr>
+      <td>
+        <code>src/logger.h</code>
+      </td>
+      <td>
+        <code>[millis][tag] message</code> serial logs
+      </td>
+      <td>all modules</td>
+    </tr>
+    <tr>
+      <td>
+        <code>src/backoff_utils.h</code>
+      </td>
+      <td>Shared exponential backoff math</td>
+      <td>WiFiManager</td>
+    </tr>
+    <tr>
+      <td>
+        <code>src/debounce_utils.h</code>
+      </td>
+      <td>Button debounce</td>
+      <td>EventPublisher</td>
+    </tr>
+    <tr>
+      <td>
+        <code>src/connectivity_timeout_utils.h</code>
+      </td>
+      <td>Dual-connect timeout logic</td>
+      <td>WatchdogSupervisor</td>
+    </tr>
+    <tr>
+      <td>
+        <code>src/interval_utils.h</code>
+      </td>
+      <td>Publish interval timing</td>
+      <td>TelemetryPublisher</td>
+    </tr>
+    <tr>
+      <td>
+        <code>include/config.h</code>
+      </td>
+      <td>Wi-Fi, thing name, endpoint, interval (generated)</td>
+      <td>
+        <code>main</code>, managers
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>include/certs.h</code>
+      </td>
+      <td>PEM certificate material (generated)</td>
+      <td>MQTTManager</td>
+    </tr>
+    <tr>
+      <td>
+        <code>platformio.ini</code>
+      </td>
+      <td>
+        Board env <code>esp32-s3-n16r8</code>, library pins
+      </td>
+      <td>
+        <Tooltip term="platformio" label="PlatformIO" />
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+## Generated vs committed files
+
+<Aside type="note" title="What is in git">
+
+**Committed:** `*.example.h` templates, all `src/` sources, `platformio.ini`
+
+**Generated locally (gitignored):** `include/config.h`, `include/certs.h`, `firmware/certs/*.pem`
+
+</Aside>
