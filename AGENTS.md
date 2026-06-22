@@ -21,5 +21,5 @@ src/components/       # Tooltip.astro
 
 ```bash
 npm run validate
-npm run build
+npm run test
 ```

@@ -8,6 +8,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "validate": "prettier --check . && markdownlint-cli2 \"src/**/*.mdx\"",
+    "test": "npm run build",
     "format": "prettier --write .",
     "lint": "markdownlint-cli2 \"src/**/*.mdx\"",
     "generate:diagram": "node scripts/generate-architecture-diagram.mjs"
