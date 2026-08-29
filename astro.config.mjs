@@ -4,8 +4,8 @@ import starlightThemeVintage from "starlight-theme-vintage";
 import { starlightBasePath } from "starlight-base-path";
 
 export default defineConfig({
-  site: "https://jajera.github.io",
-  base: "/aws-iot-walkthrough/",
+  site: "https://aws-iot-walkthrough.johna.kiwi",
+  base: "/",
   integrations: [
     starlight({
       title: "AWS IoT Walkthrough",
