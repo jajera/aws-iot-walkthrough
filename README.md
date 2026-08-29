@@ -30,7 +30,7 @@ npm ci
 npm run dev
 ```
 
-Open the URL printed by Astro (typically `http://localhost:4321/aws-iot-walkthrough/`).
+Open the URL printed by Astro (typically `http://localhost:4321/`).
 
 ## Scripts
 
