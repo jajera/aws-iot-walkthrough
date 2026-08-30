@@ -1,0 +1,28 @@
+---
+/**
+ * Starlight Head override — inject GA4 in production builds only
+ * (shared johna.kiwi stream; no analytics during `astro dev`).
+ */
+const { head } = Astro.locals.starlightRoute;
+const gaId = "G-6GP64SX615";
+const enableAnalytics = import.meta.env.PROD;
+---
+
+{head.map(({ tag: Tag, attrs, content }) => <Tag {...attrs} set:html={content} />)}
+
+{
+  enableAnalytics && (
+    <>
+      <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
+      <script is:inline define:vars={{ gaId }}>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+          dataLayer.push(arguments);
+        }
+        gtag("js", new Date());
+        gtag("config", gaId);
+      </script>
+    </>
+  )
+}
+

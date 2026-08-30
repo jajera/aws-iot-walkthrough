@@ -12,6 +12,9 @@ export default defineConfig({
       favicon: "/favicon.svg",
       description:
         "ESP32 AWS IoT demo walkthrough — Phase 1 device-to-cloud proof through API and dashboard hosting.",
+      components: {
+        Head: "./src/components/Head.astro",
+      },
       head: [
         {
           tag: "meta",
